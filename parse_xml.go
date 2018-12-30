@@ -1,5 +1,11 @@
 package goXmlParser
 
+import (
+	"bufio"
+	"fmt"
+	"io"
+)
+
 //Attribute
 type Attribute struct {
 	key   string
@@ -13,7 +19,7 @@ type Tag struct {
 }
 
 //Parse start parsing
-func ParseChan(xml string, startTag chan Tag, endTag chan Tag) {
+func ParseChan(xml io.Reader, startTag chan Tag, endTag chan Tag) {
 
 	Parse(xml,
 		func(t Tag) {
@@ -25,24 +31,35 @@ func ParseChan(xml string, startTag chan Tag, endTag chan Tag) {
 }
 
 //Parse start parsing
-func Parse(xml string, startTag func(Tag), endTag func(Tag)) {
+func Parse(xml io.Reader, startTag func(Tag), endTag func(Tag)) {
 
-	i := 0
-	for i < len(xml) {
-		if xml[i] == '<' && xml[i+1] != '/' {
-			i++
-			t := parseTag(&xml, &i)
-			startTag(t)
-		} else {
-			t := parseTag(&xml, &i)
-			endTag(t)
+	r := bufio.NewReader(xml)
+	for {
+
+		b, err := r.ReadBytes('>')
+		if err != nil {
+			fmt.Println(err)
+			break
 		}
 
-		i++
+		i := 0
+		for i < len(b) {
+
+			if b[i] == '<' && b[i+1] != '/' {
+				i++
+				t := parseTag(&b, &i)
+				startTag(t)
+			} else {
+				t := parseTag(&b, &i)
+				endTag(t)
+			}
+
+			i++
+		}
 	}
 }
 
-func parseTag(b *string, i *int) Tag {
+func parseTag(b *[]byte, i *int) Tag {
 
 	t := Tag{name: ""}
 	for *i < len(*b) {

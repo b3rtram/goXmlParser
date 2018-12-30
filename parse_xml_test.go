@@ -1,6 +1,7 @@
 package goXmlParser
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -11,7 +12,7 @@ func TestParse(t *testing.T) {
 	stc := make(chan Tag)
 	etc := make(chan Tag)
 
-	go ParseChan(str, stc, etc)
+	go ParseChan(strings.NewReader(str), stc, etc)
 
 	s := <-stc
 	t.Log(s)
